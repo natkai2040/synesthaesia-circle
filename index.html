@@ -1,0 +1,271 @@
+
+<html>
+    <head>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+        <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-core.min.js"></script>
+        <script src="https://cdn.anychart.com/releases/8.10.0/js/anychart-pie.min.js"></script>
+    </head>
+    <body> 
+        <div class="container">
+            <h1>Synesthaesia Circle</h1>
+            <p>Select what color each key 'sounds' like (in your opinion)</p>
+            <button id="button_next" type="button" class="btn btn-primary" onclick="displayNextRandomPoll()">BEGIN</button>
+            <button type="button" class="btn btn-secondary" onclick="makePollElements()">Edit all keys at once (Boring)</button>
+            <!-- <button  type="button" class="btn btn-primary" onclick="displayCircleOfFifths()">Display Circle of Fifths</button> -->
+        </div>
+
+        <div class="container">
+            <div id="pollContainer"></div>
+        </div>
+
+        <div class="container">
+            <div id="myChartContainer"></div>
+        </div>
+
+
+        <!-- SCRIPTS -->
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            let keys = [   
+                {index: 0, name: "A", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=36"},
+                {index: 1, name: "E", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=117"},
+                {index: 2, name: "B", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=60"},
+                {index: 3, name: "F#", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=0"},
+                {index: 4, name: "C#", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=82"},
+                {index: 5, name: "G#", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=24"},
+                {index: 6, name: "D#", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=106"},
+                {index: 7, name: "A#", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=47"},
+                {index: 8, name: "F", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=130"},
+                {index: 9, name: "C", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=72"},
+                {index: 10, name: "G", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=11"},
+                {index: 11, name: "D", color: "#000000", link: "https://www.youtube.com/embed/Y-TzB8WewJA?start=94"}
+            ];
+
+            let scrambledKeys = scrambleArray(keys); 
+            let mode = "random"; // random or all
+            let completedKeys = 0; 
+
+            function destroyNextButton(){
+                const nextButton  = document.getElementById('button_next');
+                if (nextButton != null){
+                    nextButton.remove(); 
+                }
+            }
+
+            function displayNextRandomPoll() { 
+                const pollContainer = document.getElementById('pollContainer');
+                const nextButton  = document.getElementById('button_next');
+
+                // Empty Poll Container
+                pollContainer.innerHTML = ''; 
+                 // Reset the Next Button
+                nextButton.innerHTML = ''; 
+                nextButton.appendChild(document.createTextNode(`Next Key (${completedKeys+1} of ${scrambledKeys.length})`)); 
+
+                console.log("COMPLETED KEYS " + completedKeys); 
+               
+
+
+                // TITLE
+                if (completedKeys >= keys.length) {
+                    console.log("Completed 12 keys");
+                    let header = document.createElement("h3"); 
+                    header.appendChild(document.createTextNode("Completed 12 Keys")); 
+                    pollContainer.appendChild(header); 
+
+                    // show circle of fifths
+                    displayCircleOfFifths(); 
+
+                    // destroy next button??
+                    destroyNextButton(); 
+                } else {
+                    addPollElement(scrambledKeys[completedKeys%(scrambledKeys.length)].index)
+                }
+                completedKeys = completedKeys + 1; 
+
+            }
+
+            // HELPER CLOSURE FOR ADDING EVENT LISTENER FOR BUTTON
+            function addNextPollClickHandler(_index){
+                return function() {
+                    addPollElement(_index);
+                };
+            }
+
+            /**
+             * Returns Scrambled Version of Main Array
+             * Shallow Copy!
+             */
+            function scrambleArray(arr) {
+                var copyarr = new Array(arr.length);
+                for(var i = 0; i < arr.length; i++)
+                {
+                    copyarr[i] = arr[i];
+                }
+
+                for(var i = 0; i < copyarr.length; i++)
+                {
+                    var new_i = i + Math.floor(Math.random() * (copyarr.length - i));
+                    // now swap elements at i and swpI
+                    var temp = copyarr[i];
+                    copyarr[i] = copyarr[new_i];
+                    copyarr[new_i] = temp;
+                }
+
+                console.log(copyarr); 
+                return copyarr; 
+            }
+
+            /** 
+             * Input: "index" value of the key in KEYS
+             *  Changes the corresponding color value in that key to that value in input_"index"
+             */
+            function saveColor(_index) {
+                console.log("saveColour" + _index)
+                // GET THE INPUT
+                const input = document.getElementById("input_"+_index);
+
+                // Note: Improve on O(n) time
+                // Changes this colour;
+                keys.forEach(key => {
+                    if (key.index == _index) {
+                        key.color = input.value; 
+                        console.log(`Changed Key ${key.name} to ${input.value}`); 
+                    }
+                }); 
+
+                // Display Immediately when mode is all; 
+                if (mode == "all") {
+                    displayCircleOfFifths(); 
+                }
+            }
+            /** 
+             * Displays Every Single Poll Element in pollContainer
+             */
+            function makePollElements() {
+                // set mode to all
+                mode = "all"; 
+
+                // DESTROY NEXT BUTTON
+                destroyNextButton(); 
+                const pollContainer = document.getElementById('pollContainer');
+
+                // CLEAR PREVIOUS CONTAINER CONTENT
+                pollContainer.innerHTML = ''; 
+
+                for (let i = 0; i < keys.length; i++){
+                    addPollElement(i); 
+                }
+                displayCircleOfFifths(); 
+            }
+            /** 
+             * Adds A Single Poll Element to pollContainer
+             */
+            function addPollElement(_index) {
+                const pollContainer = document.getElementById('pollContainer');
+
+                // GET THE KEY
+                let matchingKeyIndex = keys.filter(key => key.index == _index); 
+                if (matchingKeyIndex.length == 0){
+                    console.log("Error: Missing Key with index " + _index); 
+                    return; 
+                }
+                key = matchingKeyIndex[0]; 
+
+                let poll = document.createElement("DIV");
+
+                poll.id = `poll_${key.index}`; 
+                // TITLE
+                let header = document.createElement("h3"); 
+                header.appendChild(document.createTextNode(`${key.name} Minor`)); 
+                poll.appendChild(header); 
+
+                // VIDEO 
+                // Don't display videos when editing all
+                if (mode != "all"){
+                    let vidContainer = document.createElement("DIV"); 
+                    vidContainer.appendChild(document.createTextNode("Video Example:"));
+                    poll.appendChild(vidContainer);
+                    let iframe = document.createElement("iframe"); 
+                    iframe.id = `keyExample_${key.index}`
+                    iframe.width = 400; 
+                    iframe.height = 300; 
+                    iframe.src = key.link;
+                    poll.appendChild(document.createElement("DIV").appendChild(iframe)); 
+                }
+
+                // PICKER
+                let form = document.createElement("form");
+                form.id = `form_${key.index}`; 
+                let input = document.createElement("input"); 
+                input.id = `input_${key.index}`
+                input.type = "color";
+                input.value = key.color;
+                input.style = "width:20%;";
+                input.addEventListener('change', saveColorClickHandler(key.index) );
+                form.appendChild(document.createTextNode("Select Color: "))
+                form.appendChild(input); 
+                poll.appendChild(form);
+
+                // // SUBMIT BUTTON
+                // let button = document.createElement("button");                    
+                // button.id = `button_${key.index}`; 
+                // button.type = "button"; 
+                // button.class = "btn btn-secondary"; 
+                // button.addEventListener('click', saveColorClickHandler(key.index) );
+                // button.appendChild(document.createTextNode("Enter")); 
+                // poll.appendChild(button);
+
+                // FINALLY ADD
+                pollContainer.appendChild(poll);
+
+            }
+
+            // HELPER CLOSURE FOR ADDING EVENT LISTENER FOR BUTTON
+            function saveColorClickHandler(_index){
+                return function() {
+                    saveColor(_index);
+                };
+            }
+            
+        </script>
+
+        <script>
+            // CREATE CIRCLE OF FIFTHS WITH ANYCHARTS LIBRARY
+
+            function displayCircleOfFifths() {
+                let doc = document.getElementById("myChartContainer");
+                doc.innerHTML = ''; 
+
+                // SORT KEYS BY CIRCLE OF FIFTHS
+                let sortedKeys = keys.sort((a,b) => a.index - b.index); 
+                let anychartFormattedData = sortedKeys.map((key) => [key.name,30,key.color] )
+                let anychartFormattedPalette = sortedKeys.map((key) => {return { color: key.color }; });
+
+                let data = anychart.data.set(anychartFormattedData); 
+                var palette = anychart.palettes.distinctColors();
+                palette.items(anychartFormattedPalette);
+                let circle = anychart.pie(data); 
+                circle.innerRadius("55%"); 
+                circle.container("myChartContainer");
+                circle.draw();
+                circle.palette(palette)
+                circle.legend(false);
+                circle.tooltip().format('Color: {%Z}');
+                circle.labels().format('{%x}');
+            }
+    
+
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+        
+
+
+    </body>
+    
+    <style> 
+    </style> 
+  
+</html>
